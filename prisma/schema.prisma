@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  password          String
+  username          String   @unique
+  image             String   @default("default-avatar")
+  role              UserRole @default(CASUAL)
+  isAccountVerified Boolean  @default(false)
+  phone             String?  @unique
+  refreshToken      String?  @unique
+}
+
+model Product {
+  id                Int             @id @default(autoincrement())
+  title             String          @unique
+  description       String
+  images            String[]        @default([])
+  inStockCount      Int             @default(0)
+  cost              Float
+  slug              String          @unique
+  color             String
+  storage           Int
+  pixelDensity      Int             @map("pixel_density")
+  screenRefreshRate Int             @map("screen_refresh_rate")
+  screenDiagonal    Float           @map("screen_diagonal")
+  weight            Int
+  screenResolution  String          @map("screen_resolution")
+  operatingSystem   OperatingSystem @map("operating_system")
+  displayType       DisplayType     @map("display_type")
+  discount          Int?
+  modelId           Int?            @map("model_id")
+  model             Model?          @relation(fields: [modelId], references: [id])
+}
+
+model Model {
+  id             Int           @id @default(autoincrement())
+  name           String        @unique
+  manufacturerId Int?          @map("manufacturer_id")
+  manufacturer   Manufacturer? @relation(fields: [manufacturerId], references: [id])
+  products       Product[]
+}
+
+model Manufacturer {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  image  String  @default("default-manufacturer")
+  models Model[]
+}
+
+enum UserRole {
+  CASUAL
+  ADMIN
+}
+
+enum OperatingSystem {
+  IOS
+  ANDROID
+}
+
+enum DisplayType {
+  TN
+  IPS
+  OLED
+  AMOLED
+  SuperAMOLED
+}
