@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { PrismaService } from './core/utils/prisma.service';
+import { PrismaService } from './core/service/prisma.service';
 
 async function bootstrap() {
   const PORT = process.env.PORT || 7000

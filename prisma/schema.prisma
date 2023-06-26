@@ -8,19 +8,24 @@ datasource db {
 }
 
 model User {
-  id                Int      @id @default(autoincrement())
-  email             String   @unique
-  password          String
-  username          String   @unique
-  image             String   @default("default-avatar")
-  role              UserRole @default(CASUAL)
-  isAccountVerified Boolean  @default(false)
-  phone             String?  @unique
-  refreshToken      String?  @unique
+  id           String    @id @default(uuid())
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  email        String    @unique
+  password     String
+  username     String    @unique
+  image        String?
+  role         UserRole  @default(CASUAL)
+  phone        String?   @unique
+  refreshToken String?   @unique
+  cart         Product[] @relation("cart")
+  wishlist     Product[] @relation("wishlist")
 }
 
 model Product {
-  id                Int             @id @default(autoincrement())
+  id                String          @id @default(uuid())
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
   title             String          @unique
   description       String
   images            String[]        @default([])
@@ -37,23 +42,30 @@ model Product {
   operatingSystem   OperatingSystem @map("operating_system")
   displayType       DisplayType     @map("display_type")
   discount          Int?
-  modelId           Int?            @map("model_id")
-  model             Model?          @relation(fields: [modelId], references: [id])
+  modelId           String?         @map("model_id")
+  colorCode         String
+  model             Model?          @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  cart              User[]          @relation("cart")
+  wishlist          User[]          @relation("wishlist")
 }
 
 model Model {
-  id             Int           @id @default(autoincrement())
+  id             String        @id @default(uuid())
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
   name           String        @unique
-  manufacturerId Int?          @map("manufacturer_id")
-  manufacturer   Manufacturer? @relation(fields: [manufacturerId], references: [id])
+  manufacturerId String?       @map("manufacturer_id")
+  manufacturer   Manufacturer? @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
   products       Product[]
 }
 
 model Manufacturer {
-  id     Int     @id @default(autoincrement())
-  name   String  @unique
-  image  String  @default("default-manufacturer")
-  models Model[]
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  name      String   @unique
+  image     String?
+  models    Model[]
 }
 
 enum UserRole {

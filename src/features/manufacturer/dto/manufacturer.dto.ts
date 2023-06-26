@@ -4,8 +4,4 @@ export class ManufacturerDto {
     @IsNotEmpty()
     @IsString()
     name: string
-
-    @IsOptional()
-    @IsString()
-    image?: string
 }
