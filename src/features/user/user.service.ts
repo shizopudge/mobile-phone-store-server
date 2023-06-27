@@ -3,13 +3,13 @@ import { RegistrationDto } from '../auth/dto/registration.dto';
 import { hash } from 'argon2';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from './dto/user.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, PurchaseStatus } from '@prisma/client';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ImagesService } from 'src/core/service/image.service';
 import { PrismaService } from 'src/core/service/prisma.service';
 
 @Injectable()
-export class UsersService {
+export class UserService {
     constructor(private prisma: PrismaService, private jwt: JwtService, private imagesService: ImagesService) {}
 
     async create(dto: RegistrationDto) {
@@ -27,7 +27,7 @@ export class UsersService {
     }
 
     async getCurrentUser(authorizationHeader: string) {
-        const user = await this.getUserByAuthHeader(authorizationHeader, {cart: true, wishlist: true})
+        const user = await this.getUserByAuthHeader(authorizationHeader, {cart: true, wishlist: true, purchases: {where: {NOT: {status: PurchaseStatus.CANCELLED}}}})
         return user
     }
 

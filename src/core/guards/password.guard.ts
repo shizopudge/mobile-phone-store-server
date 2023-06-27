@@ -1,10 +1,10 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { verify } from 'argon2';
-import { UsersService } from 'src/features/users/users.service';
+import { UserService } from 'src/features/user/user.service';
 
 @Injectable()
 export class PasswordGuard implements CanActivate {
-    constructor(private usersService: UsersService) {}
+    constructor(private usersService: UserService) {}
  async canActivate(
     context: ExecutionContext,
   ) {

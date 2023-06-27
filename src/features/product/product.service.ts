@@ -5,6 +5,7 @@ import { slugify } from 'src/core/utils/slugify';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/core/service/prisma.service';
 import { ImagesService } from 'src/core/service/image.service';
+import { Product } from '@prisma/client';
 
 @Injectable()
 export class ProductService {
@@ -25,13 +26,6 @@ export class ProductService {
             color: dto.color,
             colorCode: dto.colorCode,
             storage: dto.storage,
-            pixelDensity: dto.pixelDensity,
-            screenRefreshRate: dto.screenRefreshRate,
-            screenDiagonal: dto.screenDiagonal,
-            weight: dto.weight,
-            screenResolution: dto.screenResolution,
-            operatingSystem: dto.operatingSystem,
-            displayType: dto.displayType,
             discount: dto.discount,
             modelId: dto.modelId,
         }})
@@ -46,12 +40,6 @@ export class ProductService {
 
     async getMany(page: number, limit: number, query: string, sort: string) {
         if(page === 0) page = 1
-        if(page === 1) {
-            const products = await this.prisma.product.findMany({take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query}},  include: {model: true}})
-            const productsCount = await this.prisma.product.count({where: {title: {contains: query}}})
-            const pagesCount = Math.ceil(productsCount / limit)
-            return {currentPage: page, countOnPage: products.length, pagesCount, productsCount,  products}
-        }
         const skip = (page - 1) * limit
         const products = await this.prisma.product.findMany({skip, take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query}}, include: {model: true}})
         const productsCount = await this.prisma.product.count({where: {title: {contains: query}}})
@@ -74,13 +62,6 @@ export class ProductService {
             color: dto.color,
             colorCode: dto.colorCode,
             storage: dto.storage,
-            pixelDensity: dto.pixelDensity,
-            screenRefreshRate: dto.screenRefreshRate,
-            screenDiagonal: dto.screenDiagonal,
-            weight: dto.weight,
-            screenResolution: dto.screenResolution,
-            operatingSystem: dto.operatingSystem,
-            displayType: dto.displayType,
             discount: dto.discount,
             modelId: dto.modelId,
         }})

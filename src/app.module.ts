@@ -3,13 +3,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './features/auth/auth.module';
-import { UsersModule } from './features/users/users.module';
+import { UserModule } from './features/user/user.module';
 import { join } from 'path';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ProductModule } from './features/product/product.module';
 import { ModelModule } from './features/model/model.module';
 import { ManufacturerModule } from './features/manufacturer/manufacturer.module';
 import { PrismaService } from './core/service/prisma.service';
+import { PurchaseModule } from './features/purchase/purchase.module';
 
 @Module({
   imports: [
@@ -25,10 +26,11 @@ import { PrismaService } from './core/service/prisma.service';
     }
     ), 
     AuthModule, 
-    UsersModule,
+    UserModule,
     ProductModule,
     ModelModule,
-    ManufacturerModule
+    ManufacturerModule,
+    PurchaseModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

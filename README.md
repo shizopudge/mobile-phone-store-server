@@ -1,7 +1,5 @@
 <h2 align='center'><font color="#A7C7E7"><b>MOBILE PHONE STORE SERVER</b></font></h1>
 
-<hr color="#A7C7E7">
-
 <h3>
   <ul>
     <li style="color: #EE2400">NestJS</li>

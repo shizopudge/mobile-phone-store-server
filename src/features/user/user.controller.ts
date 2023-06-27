@@ -1,14 +1,14 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Put, Req, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Request } from 'express';
-import { UsersService } from './users.service';
+import { UserService } from './user.service';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PasswordGuard } from '../../core/guards/password.guard';
 
 @Controller('users')
-export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+export class UserController {
+  constructor(private readonly usersService: UserService) {}
 
   @Get('/:id')
   async getOne(@Param('id') id: string) {

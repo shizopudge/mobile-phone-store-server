@@ -3,13 +3,14 @@ import { ProductService } from './product.service';
 import { ProductDto } from './dto/product.dto';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { AdminRoleGuard } from 'src/core/guards/admin-role.guard';
 
 @Controller('products')
 export class ProductController {
   constructor(private readonly productsService: ProductService) {}
 
   @UsePipes(new ValidationPipe())
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Post()
   async create(@Body() dto: ProductDto) {
@@ -27,7 +28,7 @@ export class ProductController {
   }
 
   @UsePipes(new ValidationPipe())
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @UseInterceptors(FilesInterceptor('images'))
   @HttpCode(200)
   @Put('/:id')
@@ -36,14 +37,14 @@ export class ProductController {
   }
 
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Delete('/:id')
   async delete(@Param('id') id: string) {
     return this.productsService.delete(id)
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @UseInterceptors(FilesInterceptor('images'))
   @HttpCode(200)
   @Patch('/images/:id')
@@ -51,7 +52,7 @@ export class ProductController {
     return this.productsService.uploadImages(id, images)
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Delete('/images/:id')
   async deleteImages(@Param('id') id: string, @Body() body: {imagesLinks: string[]}) {

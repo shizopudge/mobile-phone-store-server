@@ -16,12 +16,6 @@ export class ManufacturerService {
 
     async getMany(page: number, limit: number, query: string) {
         if(page === 0) page = 1
-        if(page === 1) {
-            const manufacturers = await this.prisma.manufacturer.findMany({take: limit, where: {name: {contains: query}}, include: {_count: {select:{models: true}}}})
-            const manufacturersCount = await this.prisma.manufacturer.count({where: {name: {contains: query}}})
-            const pagesCount = Math.ceil(manufacturersCount / limit)
-            return {currentPage: page, countOnPage: manufacturers.length, pagesCount, manufacturersCount,  manufacturers}
-        }
         const skip = (page - 1) * limit
         const manufacturers = await this.prisma.manufacturer.findMany({skip, take: limit, where: {name: {contains: query}}, include: {_count: {select:{models: true}}}})
         const manufacturersCount = await this.prisma.manufacturer.count({where: {name: {contains: query}}})

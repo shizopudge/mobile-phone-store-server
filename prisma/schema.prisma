@@ -8,32 +8,47 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(uuid())
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  email        String    @unique
+  id           String     @id @default(uuid())
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  email        String     @unique
   password     String
-  username     String    @unique
+  username     String     @unique
   image        String?
-  role         UserRole  @default(CASUAL)
-  phone        String?   @unique
-  refreshToken String?   @unique
-  cart         Product[] @relation("cart")
-  wishlist     Product[] @relation("wishlist")
+  role         UserRole   @default(CASUAL)
+  phone        String?    @unique
+  refreshToken String?    @unique
+  purchases    Purchase[]
+  cart         Product[]  @relation("cart")
+  wishlist     Product[]  @relation("wishlist")
 }
 
 model Product {
+  id           String     @id @default(uuid())
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+  title        String     @unique
+  description  String?
+  images       String[]   @default([])
+  inStockCount Int        @default(0)
+  cost         Float
+  slug         String     @unique
+  color        String
+  storage      Int
+  discount     Int?
+  modelId      String?    @map("model_id")
+  colorCode    String
+  model        Model?     @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  purchases    Purchase[]
+  cart         User[]     @relation("cart")
+  wishlist     User[]     @relation("wishlist")
+}
+
+model Model {
   id                String          @id @default(uuid())
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
-  title             String          @unique
-  description       String
-  images            String[]        @default([])
-  inStockCount      Int             @default(0)
-  cost              Float
-  slug              String          @unique
-  color             String
-  storage           Int
+  name              String          @unique
   pixelDensity      Int             @map("pixel_density")
   screenRefreshRate Int             @map("screen_refresh_rate")
   screenDiagonal    Float           @map("screen_diagonal")
@@ -41,22 +56,9 @@ model Product {
   screenResolution  String          @map("screen_resolution")
   operatingSystem   OperatingSystem @map("operating_system")
   displayType       DisplayType     @map("display_type")
-  discount          Int?
-  modelId           String?         @map("model_id")
-  colorCode         String
-  model             Model?          @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  cart              User[]          @relation("cart")
-  wishlist          User[]          @relation("wishlist")
-}
-
-model Model {
-  id             String        @id @default(uuid())
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-  name           String        @unique
-  manufacturerId String?       @map("manufacturer_id")
-  manufacturer   Manufacturer? @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
-  products       Product[]
+  manufacturerId    String?         @map("manufacturer_id")
+  manufacturer      Manufacturer?   @relation(fields: [manufacturerId], references: [id], onDelete: Cascade)
+  products          Product[]
 }
 
 model Manufacturer {
@@ -66,6 +68,25 @@ model Manufacturer {
   name      String   @unique
   image     String?
   models    Model[]
+}
+
+model Purchase {
+  id        String         @id @default(uuid())
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  status    PurchaseStatus @default(PENDING)
+  userId    String?        @map("user_id")
+  productId String?        @map("product_id")
+  product   Product?       @relation(fields: [productId], references: [id])
+  user      User?          @relation(fields: [userId], references: [id])
+}
+
+enum PurchaseStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
 }
 
 enum UserRole {

@@ -2,13 +2,14 @@ import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query, UseGu
 import { ModelService } from './model.service';
 import { ModelDto } from './dto/model.dto';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
+import { AdminRoleGuard } from 'src/core/guards/admin-role.guard';
 
 @Controller('models')
 export class ModelController {
   constructor(private readonly modelService: ModelService) {}
 
   @UsePipes(new ValidationPipe())
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Post()
   async create(@Body() dto: ModelDto) {
@@ -26,14 +27,14 @@ export class ModelController {
   }
 
   @UsePipes(new ValidationPipe())
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Put('/:id')
   async update(@Param('id') id: string, @Body() dto: ModelDto) {
     return this.modelService.update(id, dto)
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Delete('/:id')
   async delete(@Param('id') id: string) {

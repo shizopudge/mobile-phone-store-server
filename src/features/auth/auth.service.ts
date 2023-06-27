@@ -1,16 +1,16 @@
 import { UnauthorizedException, Injectable, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
+import { UserService } from '../user/user.service';
 import { UserRole } from '@prisma/client';
 import { verify } from 'argon2';
-import { UserDto } from '../users/dto/user.dto';
+import { UserDto } from '../user/dto/user.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegistrationDto } from './dto/registration.dto';
 import { PrismaService } from 'src/core/service/prisma.service';
 
 @Injectable()
 export class AuthService {
-    constructor(private jwt: JwtService, private userService: UsersService, private prisma: PrismaService) {}
+    constructor(private jwt: JwtService, private userService: UserService, private prisma: PrismaService) {}
 
     async registration(dto: RegistrationDto) {
         const user = await this.userService.create(dto)

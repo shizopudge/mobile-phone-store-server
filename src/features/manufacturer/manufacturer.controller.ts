@@ -3,13 +3,14 @@ import { ManufacturerService } from './manufacturer.service';
 import { ManufacturerDto } from './dto/manufacturer.dto';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AdminRoleGuard } from 'src/core/guards/admin-role.guard';
 
 @Controller('manufacturers')
 export class ManufacturerController {
   constructor(private readonly manufacturerService: ManufacturerService) {}
 
   @UsePipes(new ValidationPipe())
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Post()
   async create(@Body() dto: ManufacturerDto) {
@@ -21,21 +22,21 @@ export class ManufacturerController {
     return this.manufacturerService.getMany(+page, +limit, query.toUpperCase())
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Put('/:id')
   async update(@Param('id') id: string, @Body() dto: ManufacturerDto) {
     return this.manufacturerService.update(id, dto)
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Delete('/:id')
   async delete(@Param('id') id: string) {
     return this.manufacturerService.delete(id)
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @UseInterceptors(FileInterceptor('image'))
   @HttpCode(200)
   @Patch('/image/:id')
@@ -43,7 +44,7 @@ export class ManufacturerController {
     return this.manufacturerService.uploadImage(id, image)
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Delete('/image/:id')
   async deleteImage(@Param('id') id: string) {
