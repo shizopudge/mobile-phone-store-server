@@ -7,6 +7,7 @@ import { Prisma, PurchaseStatus } from '@prisma/client';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ImagesService } from 'src/core/service/image.service';
 import { PrismaService } from 'src/core/service/prisma.service';
+import { userSelectObject } from './select/user-select.object';
 
 @Injectable()
 export class UserService {
@@ -27,6 +28,7 @@ export class UserService {
     }
 
     async getCurrentUser(authorizationHeader: string) {
+        //? Remove cart, wishlist and purchases
         const user = await this.getUserByAuthHeader(authorizationHeader, {cart: true, wishlist: true, purchases: {where: {NOT: {status: PurchaseStatus.CANCELLED}}}})
         return user
     }
@@ -101,7 +103,7 @@ export class UserService {
         const accessToken = authorizationHeader.split(' ')[1]
         const payload = this.jwt.decode(accessToken)
         const uid = payload['id']
-        const user = await this.prisma.user.findUnique({where: {id: uid}, select: {id: true, email: true, username: true, image: true, role: true, phone: true, ...selectObject},})
+        const user = await this.prisma.user.findUnique({where: {id: uid}, select: {...userSelectObject, ...selectObject},})
         if(!user) throw new NotFoundException('User not found')
         return user
     }

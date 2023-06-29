@@ -3,10 +3,10 @@ import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { UserRole } from '@prisma/client';
 import { verify } from 'argon2';
-import { UserDto } from '../user/dto/user.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegistrationDto } from './dto/registration.dto';
 import { PrismaService } from 'src/core/service/prisma.service';
+import { AuthorizedUserDto } from './dto/authorized-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -16,19 +16,19 @@ export class AuthService {
         const user = await this.userService.create(dto)
         const tokens = await this.generateTokens(user.id, user.role)
         await this.userService.updateRefreshToken(user.id, tokens.refreshToken)
-        const userDto = new UserDto(user.id, user.email, user.username, user.image, user.role, user.phone)
-        return {user: userDto, tokens}
+        const authorizedUserDto = new AuthorizedUserDto(user.id, user.email, user.username, user.image, user.phone, user.role, [], [], [])
+        return {user: authorizedUserDto, tokens}
     }
 
     async login(dto: LoginDto) {
-        const user = await this.prisma.user.findUnique({where: {email: dto.email}})
+        const user = await this.prisma.user.findUnique({where: {email: dto.email}, include: {cart: true, wishlist: true, purchases: true}})
         if(!user) throw new NotFoundException('No account registered for this email')
         const isPasswordVerified = await verify(user.password, dto.password)
         if(!isPasswordVerified) throw new UnauthorizedException('Invalid password')
         const tokens = await this.generateTokens(user.id, user.role)
         await this.userService.updateRefreshToken(user.id, tokens.refreshToken)
-        const userDto = new UserDto(user.id, user.email, user.username, user.image, user.role, user.phone)
-        return {user: userDto, tokens}
+        const authorizedUserDto = new AuthorizedUserDto(user.id, user.email, user.username, user.image, user.phone, user.role, user.cart, user.wishlist, user.purchases)
+        return {user: authorizedUserDto, tokens}
     }
 
     async logout(authorizationHeader: string) {
@@ -51,7 +51,7 @@ export class AuthService {
     private async generateTokens(uid: string, role: UserRole) {
         const accessToken = await this.jwt.signAsync({id: uid, role}, {
             secret: process.env.ACCESS_TOKEN_KEY,
-            expiresIn: '24h'
+            expiresIn: '1m'
         })
         const refreshToken = await this.jwt.signAsync({id: uid}, {
             secret: process.env.REFRESH_TOKEN_KEY,

@@ -16,14 +16,14 @@ export class UserController {
   }
 
   @UseGuards(AccessTokenGuard)
-  @Get('/current/user')
+  @Get('/current/profile')
   async getCurrentUser(@Req() req: Request) {
     return this.usersService.getCurrentUser(req.header('Authorization'))
   }
 
   @UsePipes(new ValidationPipe())
   @UseGuards(AccessTokenGuard, PasswordGuard)
-  @Put('/current/user')
+  @Put('/current/profile')
   async update(@Req() req: Request, @Body() dto: UpdateUserDto) {
     return this.usersService.update(req.header('Authorization'), dto)
   }
@@ -50,14 +50,14 @@ export class UserController {
   @UseGuards(AccessTokenGuard)
   @UseInterceptors(FileInterceptor('image'))
   @HttpCode(200)
-  @Patch('/current/user/image')
+  @Patch('/current/profile/image')
   async uploadImage(@Req() req: Request, @UploadedFile() image: Express.Multer.File) {
     return this.usersService.uploadImage(req.header('Authorization'), image)
   }
 
   @UseGuards(AccessTokenGuard)
   @HttpCode(200)
-  @Delete('/current/user/image/:id')
+  @Delete('/current/profile/image/:id')
   async deleteImage(@Req() req: Request) {
     return this.usersService.deleteImage(req.header('Authorization'))
   }
