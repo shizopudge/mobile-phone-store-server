@@ -57,7 +57,7 @@ export class UserController {
 
   @UseGuards(AccessTokenGuard)
   @HttpCode(200)
-  @Delete('/current/profile/image/:id')
+  @Delete('/current/profile/image')
   async deleteImage(@Req() req: Request) {
     return this.usersService.deleteImage(req.header('Authorization'))
   }

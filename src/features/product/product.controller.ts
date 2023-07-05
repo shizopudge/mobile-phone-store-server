@@ -4,6 +4,7 @@ import { ProductDto } from './dto/product.dto';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AdminRoleGuard } from 'src/core/guards/admin-role.guard';
+import { GetProductsDto } from './dto/get-products.dto';
 
 @Controller('products')
 export class ProductController {
@@ -23,8 +24,8 @@ export class ProductController {
   }
 
   @Get()
-  async getMany(@Query('page') page: string = '1', @Query('limit') limit: string = '5', @Query('query') query: string = '', @Query('sort') sort: string = 'desc') {
-    return this.productsService.getMany(+page, +limit, query.toUpperCase(), sort)
+  async getMany(@Query() dto: GetProductsDto) {
+    return this.productsService.getMany(+dto.page, +dto.limit, dto.query.toUpperCase(), dto.sort, JSON.parse(dto.withDiscount), JSON.parse(dto.newArrival))
   }
 
   @UsePipes(new ValidationPipe())

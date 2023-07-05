@@ -23,7 +23,11 @@ import { PurchaseModule } from './features/purchase/purchase.module';
     {
       rootPath: join(__dirname, '..', 'static/products'),
       renderPath: '/products'
-    }
+    },
+    {
+      rootPath: join(__dirname, '..', 'static/manufacturers'),
+      renderPath: '/manufacturers'
+    },
     ), 
     AuthModule, 
     UserModule,

@@ -5,7 +5,6 @@ import { slugify } from 'src/core/utils/slugify';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/core/service/prisma.service';
 import { ImagesService } from 'src/core/service/image.service';
-import { Product } from '@prisma/client';
 
 @Injectable()
 export class ProductService {
@@ -33,18 +32,18 @@ export class ProductService {
     }
 
     async getOne(id: string) {
-        const product = await this.prisma.product.findUnique({where: {id}, include: {model: true}})
+        const product = await this.prisma.product.findUnique({where: {id}, include: {model: {include: {manufacturer: true, products: true}}}})
         if(!product) throw new NotFoundException('Product not found')
         return product
     }
 
-    async getMany(page: number, limit: number, query: string, sort: string) {
+    async getMany(page: number, limit: number, query: string, sort: string, withDiscount: boolean, newArrival: boolean) {
         if(page === 0) page = 1
         const skip = (page - 1) * limit
-        const products = await this.prisma.product.findMany({skip, take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query}}, include: {model: true}})
-        const productsCount = await this.prisma.product.count({where: {title: {contains: query}}})
-        const pagesCount = Math.ceil(productsCount / limit)
-        return {currentPage: page, countOnPage: products.length, pagesCount, productsCount,  products}
+        const products = await this.prisma.product.findMany({skip, take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query},  discount: withDiscount === true ? {not: null} : undefined, createdAt: newArrival ? {gte: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)}: undefined}, include: {model: {include: {manufacturer: true, products: true}}}})
+        const productCount = await this.prisma.product.count({where: {title: {contains: query}}})
+        const pageCount = Math.ceil(productCount / limit)
+        return {info: {currentPage: page, countOnPage: products.length, pageCount, itemCount: productCount},  products}
     }
 
     async update(id: string, dto: ProductDto) {
