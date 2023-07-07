@@ -1,17 +1,17 @@
 export class GetProductsDto {
-    page: string = '1'
+    page: string
 
-    limit: string = '5'
+    limit: string
 
-    query: string = ''
+    query: string
 
-    sort: string = 'desc'
+    sort: string
 
-    newArrival: string = 'false'
+    newArrival: string
 
-    withDiscount: string = 'false'
+    withDiscount: string
 
-    minPrice: string = '0'
+    minCost: string
 
-    maxPrice: string = Number.MAX_VALUE.toString()
+    maxCost: string
 }

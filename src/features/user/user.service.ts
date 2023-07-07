@@ -28,7 +28,6 @@ export class UserService {
     }
 
     async getCurrentUser(authorizationHeader: string) {
-        //? Remove cart, wishlist and purchases
         const user = await this.getUserByAuthHeader(authorizationHeader, {cart: true, wishlist: true, purchases: {where: {NOT: {status: PurchaseStatus.CANCELLED}}}})
         return user
     }
@@ -55,7 +54,7 @@ export class UserService {
         return userDto
     }
     async update(authorizationHeader: string, dto: UpdateUserDto) {
-        const user = await this.getUserByAuthHeader(authorizationHeader, {password: true})
+        const user = await this.getUserByAuthHeader(authorizationHeader, {password: true,})
         if (user.email !== dto.email) {
             const userByEmail = await this.prisma.user.findUnique({where: {email: dto.email}})
             if(userByEmail) throw new BadRequestException('User with the same email is already exist')
@@ -71,7 +70,7 @@ export class UserService {
             password: dto.password === dto.newPassword || !dto.newPassword ? user.password : await hash(dto.newPassword),
             phone: dto.phone
         }, select: {
-            ...userSelectObject
+            ...userSelectObject, cart: true, wishlist: true, purchases: {where: {NOT: {status: PurchaseStatus.CANCELLED}}}
         }})
     }
 
