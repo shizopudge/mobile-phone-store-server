@@ -19,7 +19,6 @@ export class ProductService {
         const product = await this.prisma.product.create({data: {
             title,
             slug,
-            description: dto.description,
             inStockCount: dto.inStockCount,
             cost: dto.cost,
             color: dto.color,
@@ -55,7 +54,6 @@ export class ProductService {
         return await this.prisma.product.update({where: {id}, data: {
             title,
             slug,
-            description: dto.description,
             inStockCount: dto.inStockCount,
             cost: dto.cost,
             color: dto.color,

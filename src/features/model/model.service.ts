@@ -13,6 +13,7 @@ export class ModelService {
         if(!isManufacturerExist) throw new BadRequestException('Manufacturer does not exist')
         const model = await this.prisma.model.create({data: {
             name: dto.name.toUpperCase(), 
+            description: dto.description,
             pixelDensity: dto.pixelDensity,
             screenRefreshRate: dto.screenRefreshRate,
             screenDiagonal: dto.screenDiagonal,

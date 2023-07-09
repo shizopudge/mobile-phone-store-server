@@ -2,10 +2,6 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class ProductDto {
 
-    @IsNotEmpty({message: 'description must not be empty'})
-    @IsString()
-    description: string
-
     @IsOptional()
     @IsNumber()
     inStockCount?: number

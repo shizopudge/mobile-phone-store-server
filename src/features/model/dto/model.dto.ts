@@ -6,6 +6,10 @@ export class ModelDto {
     @IsString()
     name: string
 
+    @IsNotEmpty({message: 'description must not be empty'})
+    @IsString()
+    description: string
+
     @IsNotEmpty({message: 'pixel density must not be empty'})
     @IsNumber()
     pixelDensity: number

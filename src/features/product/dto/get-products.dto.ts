@@ -1,17 +1,17 @@
 export class GetProductsDto {
-    page: string
+    page?: string
 
-    limit: string
+    limit?: String
 
-    query: string
+    query?: string
 
-    sort: string
+    sort?: string
 
-    newArrival: string
+    newArrival?: string
 
-    withDiscount: string
+    withDiscount?: string
 
-    minCost: string
+    minCost?: string
 
-    maxCost: string
+    maxCost?: string
 }

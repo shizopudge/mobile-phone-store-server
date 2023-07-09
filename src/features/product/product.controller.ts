@@ -25,7 +25,7 @@ export class ProductController {
 
   @Get()
   async getMany(@Query() dto: GetProductsDto) {
-    return this.productsService.getMany(+dto.page, +dto.limit, dto.query.toUpperCase(), dto.sort, JSON.parse(dto.withDiscount), JSON.parse(dto.newArrival), +dto.minCost, +dto.maxCost)
+    return this.productsService.getMany(+(dto.page ?? 1), +(dto.limit ?? 10), (dto.query ?? '').toUpperCase(), dto.sort ?? 'desc', JSON.parse(dto.withDiscount ?? 'false'), JSON.parse(dto.newArrival ?? 'false'), +(dto.minCost ?? 0), +(dto.maxCost ?? Number.MAX_VALUE))
   }
 
   @UsePipes(new ValidationPipe())
