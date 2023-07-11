@@ -39,8 +39,8 @@ export class ProductService {
     async getMany(page: number, limit: number, query: string, sort: string, withDiscount: boolean, newArrival: boolean, minCost: number, maxCost: number) {
         if(page === 0) page = 1
         const skip = (page - 1) * limit
-        const products = await this.prisma.product.findMany({skip, take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query},  discount: withDiscount === true ? {not: null} : undefined, createdAt: newArrival ? {gte: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)}: undefined, cost: {gte: minCost ? minCost: undefined, lte: maxCost ? maxCost : undefined},}, include: {model: {include: {manufacturer: true, products: true}}}})
-        const productCount = await this.prisma.product.count({where: {title: {contains: query}}})
+        const products = await this.prisma.product.findMany({skip, take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query},  discount: withDiscount === true ? {not: null} : undefined, createdAt: newArrival ? {gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)}: undefined, cost: {gte: minCost ? minCost: undefined, lte: maxCost ? maxCost : undefined},}, include: {model: {include: {manufacturer: true, products: true}}}})
+        const productCount = await this.prisma.product.count({where: {title: {contains: query},  discount: withDiscount === true ? {not: null} : undefined, createdAt: newArrival ? {gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)}: undefined, cost: {gte: minCost ? minCost: undefined, lte: maxCost ? maxCost : undefined},},})
         const pageCount = Math.ceil(productCount / limit)
         return {info: {currentPage: page, countOnPage: products.length, pageCount, itemCount: productCount},  products}
     }

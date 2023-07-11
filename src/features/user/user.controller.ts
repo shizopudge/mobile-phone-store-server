@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Put, Req, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Put, Query, Req, UploadedFile, UseGuards, UseInterceptors, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Request } from 'express';
 import { UserService } from './user.service';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PasswordGuard } from '../../core/guards/password.guard';
+import { GetProductsDto } from '../product/dto/get-products.dto';
 
 @Controller('users')
 export class UserController {
@@ -45,6 +46,24 @@ export class UserController {
   @Patch('/wishlist/:id')
   async toggleWishlist(@Param('id') id: string, @Req() req: Request) {
     return this.usersService.toggleWishlist(id, req.header('Authorization'))
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Get('/cart/products')
+  async getCurrentUserCart(@Req() req: Request, @Query() dto: GetProductsDto) {
+    return this.usersService.getCurrentUserCart(req.header('Authorization'), +(dto.page ?? '1'), +(dto.limit ?? '10'), (dto.query ?? '').toUpperCase(), dto.sort ?? 'desc', JSON.parse(dto.withDiscount ?? 'false'), JSON.parse(dto.newArrival ?? 'false'), +(dto.minCost ?? 0), +(dto.maxCost ?? Number.MAX_VALUE))
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Get('/wishlist/products')
+  async getCurrentUserWishlist(@Req() req: Request, @Query() dto: GetProductsDto) {
+    return this.usersService.getCurrentUserWishlist(req.header('Authorization'), +(dto.page ?? '1'), +(dto.limit ?? '10'), (dto.query ?? '').toUpperCase(), dto.sort ?? 'desc', JSON.parse(dto.withDiscount ?? 'false'), JSON.parse(dto.newArrival ?? 'false'), +(dto.minCost ?? 0), +(dto.maxCost ?? Number.MAX_VALUE))
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Get('/purchases/products')
+  async getCurrentUserPurchases(@Req() req: Request) {
+    return this.usersService.getCurrentUserPurchases(req.header('Authorization'))
   }
 
   @UseGuards(AccessTokenGuard)

@@ -16,19 +16,19 @@ export class AuthService {
         const user = await this.userService.create(dto)
         const tokens = await this.generateTokens(user.id, user.role)
         await this.userService.updateRefreshToken(user.id, tokens.refreshToken)
-        const authorizedUserDto = new AuthorizedUserDto(user.id, user.email, user.username, user.image, user.phone, user.role, [], [], [])
-        return {user: authorizedUserDto, tokens}
+        const returnUser = await this.userService.getCurrentUser(`Bearer ${tokens.accessToken}`);
+        return {user: returnUser, tokens}
     }
 
     async login(dto: LoginDto) {
-        const user = await this.prisma.user.findUnique({where: {email: dto.email}, include: {cart: true, wishlist: true, purchases: true}})
+        const user = await this.prisma.user.findUnique({where: {email: dto.email}})
         if(!user) throw new NotFoundException('No account registered for this email')
         const isPasswordVerified = await verify(user.password, dto.password)
         if(!isPasswordVerified) throw new UnauthorizedException('Invalid password')
         const tokens = await this.generateTokens(user.id, user.role)
         await this.userService.updateRefreshToken(user.id, tokens.refreshToken)
-        const authorizedUserDto = new AuthorizedUserDto(user.id, user.email, user.username, user.image, user.phone, user.role, user.cart, user.wishlist, user.purchases)
-        return {user: authorizedUserDto, tokens}
+        const returnUser = await this.userService.getCurrentUser(`Bearer ${tokens.accessToken}`);
+        return {user: returnUser, tokens}
     }
 
     async logout(authorizationHeader: string) {

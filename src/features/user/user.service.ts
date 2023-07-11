@@ -28,23 +28,35 @@ export class UserService {
     }
 
     async getCurrentUser(authorizationHeader: string) {
-        const user = await this.getUserByAuthHeader(authorizationHeader, {cart: true, wishlist: true, purchases: {where: {NOT: {status: PurchaseStatus.CANCELLED}}}})
+        const user = await this.getUserByAuthHeader(authorizationHeader, {cart: {include: {model: {include: {products: true, manufacturer: true}}}}, wishlist: {include: {model: {include: {products: true, manufacturer: true}}}}, purchases: {where: {NOT: {status: PurchaseStatus.CANCELLED}}, include: {product: {include: {model: {include: {products: true,manufacturer: true}}}}}}})
         return user
     }
 
-    async getCurrentUserCart(authorizationHeader: string) {
-        const id = this.getCurrentUserId(authorizationHeader);
-        return await this.prisma.user.findUnique({where: id, select: {cart: true}});
+    async getCurrentUserCart(authorizationHeader: string, page: number, limit: number, query: string, sort: string, withDiscount: boolean, newArrival: boolean, minCost: number, maxCost: number) {
+        const id = this.getCurrentUserId(authorizationHeader)
+        console.log(id)
+        if(page === 0) page = 1
+        const skip = (page - 1) * limit
+        const res = await this.prisma.user.findUnique({where: {id}, select: {cart: {skip: skip, take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query},  discount: withDiscount === true ? {not: null} : undefined, createdAt: newArrival ? {gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)}: undefined, cost: {gte: minCost ? minCost: undefined, lte: maxCost ? maxCost : undefined},}, include: {model: {include: {manufacturer: true, products: true}}}}}});
+        const productCount = (await this.prisma.user.findUnique({where: {id}, include: {_count: {select: {cart: true}}}}))._count.cart;
+        const pageCount = Math.ceil(productCount / limit)
+        return {info: {currentPage: page, countOnPage: res.cart.length, pageCount, itemCount: productCount}, products: res.cart};
     }
 
-    async getCurrentUserWishlist(authorizationHeader: string) {
-        const id = this.getCurrentUserId(authorizationHeader);
-        return await this.prisma.user.findUnique({where: id, select: {wishlist: true}});
+    async getCurrentUserWishlist(authorizationHeader: string, page: number, limit: number, query: string, sort: string, withDiscount: boolean, newArrival: boolean, minCost: number, maxCost: number) {
+        const id = this.getCurrentUserId(authorizationHeader)
+        console.log(id)
+        if(page === 0) page = 1
+        const skip = (page - 1) * limit
+        const res = await this.prisma.user.findUnique({where: {id}, select: {wishlist: {skip: skip, take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query},  discount: withDiscount === true ? {not: null} : undefined, createdAt: newArrival ? {gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)}: undefined, cost: {gte: minCost ? minCost: undefined, lte: maxCost ? maxCost : undefined},}, include: {model: {include: {manufacturer: true, products: true}}}}}});
+        const productCount = (await this.prisma.user.findUnique({where: {id}, include: {_count: {select: {wishlist: true}}}}))._count.wishlist;
+        const pageCount = Math.ceil(productCount / limit)
+        return {info: {currentPage: page, countOnPage: res.wishlist.length, pageCount, itemCount: productCount}, products: res.wishlist};
     }
 
     async getCurrentUserPurchases(authorizationHeader: string) {
         const id = this.getCurrentUserId(authorizationHeader);
-        return await this.prisma.user.findUnique({where: id, select: {purchases: true}});
+        return await this.prisma.user.findUnique({where: {id}, select: {purchases: {include: {product: {include: {model: {include: {products: true, manufacturer: true}}}}}}}});
     }
 
     async getOne(id: string) {
@@ -94,11 +106,13 @@ export class UserService {
         const isProductExist = await this.prisma.product.findUnique({where: {id}})
         if(!isProductExist) throw new BadRequestException('Product not found')
         const isAlreadyInCart = user.cart.some(product => product.id === id)
-        await this.prisma.user.update({where: {id: user.id}, data: {cart: {
+        const updatedUser = await this.prisma.user.update({where: {id: user.id}, data: {cart: {
             [isAlreadyInCart ? 'disconnect' : 'connect'] : {
                 id
             }
-        }}})
+        }}, include: {cart: {include: {model: {include: {manufacturer: true, products: true}}}}}})
+        const updatedCart = updatedUser.cart;
+        return {products: updatedCart};
     }
 
     async toggleWishlist(id: string, authorizationHeader: string) {
@@ -106,11 +120,13 @@ export class UserService {
         const isProductExist = await this.prisma.product.findUnique({where: {id}})
         if(!isProductExist) throw new BadRequestException('Product not found')
         const isAlreadyInWishlist = user.wishlist.some(product => product.id === id)
-        await this.prisma.user.update({where: {id: user.id}, data: {wishlist: {
+        const updatedUser = await this.prisma.user.update({where: {id: user.id}, data: {wishlist: {
             [isAlreadyInWishlist ? 'disconnect' : 'connect'] : {
                 id
             }
-        }}})
+        }}, include: {wishlist: {include: {model: {include: { manufacturer: true, products: true}}}}}})
+        const updatedWishlist = updatedUser.wishlist;
+        return {products: updatedWishlist};
     }
 
     async uploadImage(authorizationHeader: string, image: Express.Multer.File) {
@@ -127,7 +143,7 @@ export class UserService {
         const accessToken = authorizationHeader.split(' ')[1]
         const payload = this.jwt.decode(accessToken)
         const uid = payload['id']
-        const user = await this.prisma.user.findUnique({where: {id: uid}, select: {...userSelectObject, ...selectObject},})
+        const user = await this.prisma.user.findUnique({where: {id: uid}, select: {...userSelectObject, ...selectObject}})
         if(!user) throw new NotFoundException('User not found')
         return user
     }
