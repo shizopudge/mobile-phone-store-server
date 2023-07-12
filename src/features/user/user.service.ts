@@ -28,30 +28,30 @@ export class UserService {
     }
 
     async getCurrentUser(authorizationHeader: string) {
-        const user = await this.getUserByAuthHeader(authorizationHeader, {cart: {include: {model: {include: {products: true, manufacturer: true}}}}, wishlist: {include: {model: {include: {products: true, manufacturer: true}}}}, purchases: {where: {NOT: {status: PurchaseStatus.CANCELLED}}, include: {product: {include: {model: {include: {products: true,manufacturer: true}}}}}}})
+        const user = await this.getUserByAuthHeader(authorizationHeader)
         return user
     }
 
     async getCurrentUserCart(authorizationHeader: string, page: number, limit: number, query: string, sort: string, withDiscount: boolean, newArrival: boolean, minCost: number, maxCost: number) {
         const id = this.getCurrentUserId(authorizationHeader)
-        console.log(id)
         if(page === 0) page = 1
         const skip = (page - 1) * limit
         const res = await this.prisma.user.findUnique({where: {id}, select: {cart: {skip: skip, take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query},  discount: withDiscount === true ? {not: null} : undefined, createdAt: newArrival ? {gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)}: undefined, cost: {gte: minCost ? minCost: undefined, lte: maxCost ? maxCost : undefined},}, include: {model: {include: {manufacturer: true, products: true}}}}}});
-        const productCount = (await this.prisma.user.findUnique({where: {id}, include: {_count: {select: {cart: true}}}}))._count.cart;
+        let productCount = (await this.prisma.user.findUnique({where: {id}, include: {_count: {select: {cart: true}}}}))._count.cart;
+        if(!productCount || isNaN(productCount)) productCount = 0
         const pageCount = Math.ceil(productCount / limit)
-        return {info: {currentPage: page, countOnPage: res.cart.length, pageCount, itemCount: productCount}, products: res.cart};
+        return {info: {currentPage: page ?? 1, countOnPage: res.cart.length ?? 0, pageCount, itemCount: productCount ?? 0}, products: res.cart};
     }
 
     async getCurrentUserWishlist(authorizationHeader: string, page: number, limit: number, query: string, sort: string, withDiscount: boolean, newArrival: boolean, minCost: number, maxCost: number) {
         const id = this.getCurrentUserId(authorizationHeader)
-        console.log(id)
         if(page === 0) page = 1
         const skip = (page - 1) * limit
         const res = await this.prisma.user.findUnique({where: {id}, select: {wishlist: {skip: skip, take: limit, orderBy: {cost: sort === 'asc' ? 'asc' : 'desc'}, where: {title: {contains: query},  discount: withDiscount === true ? {not: null} : undefined, createdAt: newArrival ? {gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)}: undefined, cost: {gte: minCost ? minCost: undefined, lte: maxCost ? maxCost : undefined},}, include: {model: {include: {manufacturer: true, products: true}}}}}});
-        const productCount = (await this.prisma.user.findUnique({where: {id}, include: {_count: {select: {wishlist: true}}}}))._count.wishlist;
+        let productCount = (await this.prisma.user.findUnique({where: {id}, include: {_count: {select: {wishlist: true}}}}))._count.wishlist;
+        if(!productCount || isNaN(productCount)) productCount = 0
         const pageCount = Math.ceil(productCount / limit)
-        return {info: {currentPage: page, countOnPage: res.wishlist.length, pageCount, itemCount: productCount}, products: res.wishlist};
+        return {info: {currentPage: page ?? 1, countOnPage: res.wishlist.length ?? 0, pageCount, itemCount: productCount ?? 0}, products: res.wishlist};
     }
 
     async getCurrentUserPurchases(authorizationHeader: string) {
