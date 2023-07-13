@@ -43,7 +43,7 @@ export class ProductService {
         let productCount = await this.prisma.product.count({where: {title: {contains: query},  discount: withDiscount === true ? {not: null} : undefined, createdAt: newArrival ? {gte: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)}: undefined, cost: {gte: minCost ? minCost: undefined, lte: maxCost ? maxCost : undefined},},})
         if(!productCount || isNaN(productCount)) productCount = 0
         const pageCount = Math.ceil(productCount / limit)
-        return {info: {currentPage: page, countOnPage: products.length, pageCount, itemCount: productCount},  products}
+        return {info: {currentPage: page ?? 1, countOnPage: products.length ?? 0, pageCount, itemCount: productCount ?? 0},  products}
     }
 
     async update(id: string, dto: ProductDto) {

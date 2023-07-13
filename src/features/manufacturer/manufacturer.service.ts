@@ -17,10 +17,11 @@ export class ManufacturerService {
     async getMany(page: number, limit: number, query: string) {
         if(page === 0) page = 1
         const skip = (page - 1) * limit
-        const manufacturers = await this.prisma.manufacturer.findMany({skip, take: limit, where: {name: {contains: query}}, include: {_count: {select:{models: true}}}})
-        const manufacturersCount = await this.prisma.manufacturer.count({where: {name: {contains: query}}})
-        const pagesCount = Math.ceil(manufacturersCount / limit)
-        return {currentPage: page, countOnPage: manufacturers.length, pagesCount, manufacturersCount,  manufacturers}
+        const manufacturers = await this.prisma.manufacturer.findMany({skip, take: limit, where: {name: {contains: query}}})
+        let manufacturersCount = await this.prisma.manufacturer.count({where: {name: {contains: query}}})
+        if(!manufacturersCount || isNaN(manufacturersCount)) manufacturersCount = 0
+        const pageCount = Math.ceil(manufacturersCount / limit)
+        return {info: {currentPage: page ?? 1, countOnPage: manufacturers.length ?? 0, pageCount, itemCount: manufacturersCount ?? 0},  manufacturers}
     }
 
     async update(id: string, dto: ManufacturerDto) {
