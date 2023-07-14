@@ -8,7 +8,6 @@ import { AdminRoleGuard } from 'src/core/guards/admin-role.guard';
 export class ModelController {
   constructor(private readonly modelService: ModelService) {}
 
-  @UsePipes(new ValidationPipe())
   @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Post()
@@ -26,7 +25,7 @@ export class ModelController {
     return this.modelService.getOne(id)
   }
 
-  @UsePipes(new ValidationPipe())
+
   @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Put('/:id')

@@ -11,18 +11,17 @@ export class ModelService {
         if(isModelExist) throw new BadRequestException('Model with the same name is already exist, please select it when creating a product')
         const isManufacturerExist = await this.prisma.manufacturer.findUnique({where: {id: dto.manufacturerId}})
         if(!isManufacturerExist) throw new BadRequestException('Manufacturer does not exist')
-        const model = await this.prisma.model.create({data: {
+        return await this.prisma.model.create({data: {
             name: dto.name.toUpperCase(), 
             description: dto.description,
-            pixelDensity: dto.pixelDensity,
-            screenRefreshRate: dto.screenRefreshRate,
-            screenDiagonal: dto.screenDiagonal,
-            weight: dto.weight,
+            pixelDensity: +dto.pixelDensity,
+            screenRefreshRate: +dto.screenRefreshRate,
+            screenDiagonal: +dto.screenDiagonal,
+            weight: +dto.weight,
             screenResolution: dto.screenResolution,
             operatingSystem: dto.operatingSystem,
             displayType: dto.displayType,
-            manufacturerId: dto.manufacturerId}})
-        return model
+            manufacturerId: dto.manufacturerId}, include: {products: {include: {model: {include: {products: true, manufacturer: true}}}}, manufacturer: true}})
     }
 
     async getMany(page: number, limit: number, query: string, manufacturerId: string) {
@@ -30,10 +29,11 @@ export class ModelService {
         if(!isManufacturerExist) throw new BadRequestException('Manufacturer does not exist')
         if(page === 0) page = 1
         const skip = (page - 1) * limit
-        const models = await this.prisma.model.findMany({skip, take: limit, select: {id: true, name: true, products: true, manufacturer: true}, where: {name: {contains: query}, manufacturerId: {equals: manufacturerId}}})
-        const modelsCount = await this.prisma.model.count({where: {name: {contains: query}, manufacturerId: {equals: manufacturerId}}})
-        const pagesCount = Math.ceil(modelsCount / limit)
-        return {currentPage: page, countOnPage: models.length, pagesCount,  modelsCount, models}
+        const models = await this.prisma.model.findMany({skip, take: limit, where: {name: {contains: query}, manufacturerId: {equals: manufacturerId}}, include: {products: {include: {model: {include: {products: true, manufacturer: true}}}}, manufacturer: true}})
+        let modelsCount = await this.prisma.model.count({where: {name: {contains: query}, manufacturerId: {equals: manufacturerId}}})
+        if(!modelsCount || isNaN(modelsCount)) modelsCount = 0
+        const pageCount = Math.ceil(modelsCount / limit)
+        return {info: {currentPage: page ?? 1, countOnPage: models.length ?? 0, pageCount, itemCount: modelsCount ?? 0},  models}
     }
 
     async getOne(id: string) {
@@ -53,13 +53,14 @@ export class ModelService {
         if(!model) throw new NotFoundException('Model not found')
         return await this.prisma.model.update({where: {id}, data: {
             name: dto.name.toUpperCase(), 
-            pixelDensity: dto.pixelDensity,
-            screenRefreshRate: dto.screenRefreshRate,
-            screenDiagonal: dto.screenDiagonal,
-            weight: dto.weight,
+            description: dto.description,
+            pixelDensity: +dto.pixelDensity,
+            screenRefreshRate: +dto.screenRefreshRate,
+            screenDiagonal: +dto.screenDiagonal,
+            weight: +dto.weight,
             screenResolution: dto.screenResolution,
             operatingSystem: dto.operatingSystem,
             displayType: dto.displayType,
-            manufacturerId: dto.manufacturerId}})
+            manufacturerId: dto.manufacturerId}, include: {products: {include: {model: {include: {products: true, manufacturer: true}}}}, manufacturer: true}})
     }
 }
