@@ -10,7 +10,6 @@ import { GetProductsDto } from './dto/get-products.dto';
 export class ProductController {
   constructor(private readonly productsService: ProductService) {}
 
-  @UsePipes(new ValidationPipe())
   @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @HttpCode(200)
   @Post()
@@ -27,8 +26,7 @@ export class ProductController {
   async getMany(@Query() dto: GetProductsDto) {
     return this.productsService.getMany(+(dto.page ?? 1), +(dto.limit ?? 10), (dto.query ?? '').toUpperCase(), dto.sort ?? 'desc', JSON.parse(dto.withDiscount ?? 'false'), JSON.parse(dto.newArrival ?? 'false'), +(dto.minCost ?? 0), +(dto.maxCost ?? Number.MAX_VALUE))
   }
-
-  @UsePipes(new ValidationPipe())
+  
   @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @UseInterceptors(FilesInterceptor('images'))
   @HttpCode(200)

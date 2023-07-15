@@ -19,12 +19,12 @@ export class ProductService {
         const product = await this.prisma.product.create({data: {
             title,
             slug,
-            inStockCount: dto.inStockCount,
-            cost: dto.cost,
-            color: dto.color,
+            inStockCount: +dto.inStockCount,
+            cost: +dto.cost,
+            color: dto.color.toUpperCase(),
             colorCode: dto.colorCode,
-            storage: dto.storage,
-            discount: dto.discount,
+            storage: +dto.storage,
+            discount: dto.discount ? +dto.discount : null,
             modelId: dto.modelId,
         }})
         return product
@@ -55,12 +55,12 @@ export class ProductService {
         return await this.prisma.product.update({where: {id}, data: {
             title,
             slug,
-            inStockCount: dto.inStockCount,
-            cost: dto.cost,
-            color: dto.color,
+            inStockCount: +dto.inStockCount,
+            cost: +dto.cost,
+            color: dto.color.toUpperCase(),
             colorCode: dto.colorCode,
-            storage: dto.storage,
-            discount: dto.discount,
+            storage: +dto.storage,
+            discount: dto.discount ? +dto.discount : null,
             modelId: dto.modelId,
         }})
     }
@@ -92,7 +92,7 @@ export class ProductService {
         if(!product) throw new NotFoundException('Product not found')
         if(!product.images) throw new BadRequestException('Product doesnt have an images')
         if(imagesLinks.length === 1) await this.imagesService.deleteImage(imagesLinks[0], 'products')
-        if(imagesLinks.length > 1) await this.imagesService.deleteImages(imagesLinks, 'products')
+        // if(imagesLinks.length > 1) await this.imagesService.deleteImages(imagesLinks, 'products')
         const filteredImagesLinks = product.images.filter(imageLink => !imagesLinks.includes(imageLink))
         await this.prisma.product.update({where: {id}, data: {images: filteredImagesLinks}})
     }

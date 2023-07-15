@@ -51,7 +51,7 @@ export class AuthService {
     private async generateTokens(uid: string, role: UserRole) {
         const accessToken = await this.jwt.signAsync({id: uid, role}, {
             secret: process.env.ACCESS_TOKEN_KEY,
-            expiresIn: '15s'
+            expiresIn: '15m'
         })
         const refreshToken = await this.jwt.signAsync({id: uid}, {
             secret: process.env.REFRESH_TOKEN_KEY,
