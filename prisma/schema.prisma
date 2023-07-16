@@ -24,23 +24,23 @@ model User {
 }
 
 model Product {
-  id           String     @id @default(uuid())
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
-  title        String     @unique
-  images       String[]   @default([])
-  inStockCount Int        @default(0)
-  cost         Float
-  slug         String     @unique
-  color        String
-  storage      Int
-  discount     Int?
-  modelId      String?    @map("model_id")
-  colorCode    String
-  model        Model?     @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  purchases    Purchase[]
-  cart         User[]     @relation("cart")
-  wishlist     User[]     @relation("wishlist")
+  id            String         @id @default(uuid())
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  title         String         @unique
+  images        String[]       @default([])
+  inStockCount  Int            @default(0)
+  cost          Float
+  slug          String         @unique
+  color         String
+  storage       Int
+  discount      Int?
+  modelId       String?        @map("model_id")
+  colorCode     String
+  model         Model?         @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  purchaseItems PurchaseItem[]
+  cart          User[]         @relation("cart")
+  wishlist      User[]         @relation("wishlist")
 }
 
 model Model {
@@ -71,14 +71,24 @@ model Manufacturer {
 }
 
 model Purchase {
-  id        String         @id @default(uuid())
-  createdAt DateTime       @default(now()) @map("created_at")
-  updatedAt DateTime       @updatedAt @map("updated_at")
-  status    PurchaseStatus @default(PENDING)
-  userId    String?        @map("user_id")
-  productId String?        @map("product_id")
-  product   Product?       @relation(fields: [productId], references: [id])
-  user      User?          @relation(fields: [userId], references: [id])
+  id            String         @id @default(uuid())
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  paymentId     String         @map("payment_id")
+  status        PurchaseStatus @default(PENDING)
+  userId        String?        @map("user_id")
+  user          User?          @relation(fields: [userId], references: [id])
+  purchaseItems PurchaseItem[]
+}
+
+model PurchaseItem {
+  id         String    @id @default(uuid())
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  productId  String?   @map("product_id")
+  purchaseId String?   @map("purchase_id")
+  product    Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  purchase   Purchase? @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 }
 
 enum PurchaseStatus {

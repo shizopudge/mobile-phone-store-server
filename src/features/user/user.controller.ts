@@ -6,6 +6,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PasswordGuard } from '../../core/guards/password.guard';
 import { GetProductsDto } from '../product/dto/get-products.dto';
+import { PurchaseStatus } from '@prisma/client';
 
 @Controller('users')
 export class UserController {
@@ -27,6 +28,12 @@ export class UserController {
   @Put('/current/profile')
   async update(@Req() req: Request, @Body() dto: UpdateUserDto) {
     return this.usersService.update(req.header('Authorization'), dto)
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Get('/purchases/all')
+  async getUserPurchases(@Req() req: Request, @Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('query') query: string = '', @Query('sort') sort: string = 'desc', @Query('status') status?: PurchaseStatus) {
+    return this.usersService.getUserPurchases(req.header('Authorization'), +page, +limit, query.toUpperCase(), sort, status)
   }
 
   @UseGuards(AccessTokenGuard, PasswordGuard)
@@ -58,12 +65,6 @@ export class UserController {
   @Get('/wishlist/products')
   async getCurrentUserWishlist(@Req() req: Request, @Query() dto: GetProductsDto) {
     return this.usersService.getCurrentUserWishlist(req.header('Authorization'), +(dto.page ?? '1'), +(dto.limit ?? '10'), (dto.query ?? '').toUpperCase(), dto.sort ?? 'desc', JSON.parse(dto.withDiscount ?? 'false'), JSON.parse(dto.newArrival ?? 'false'), +(dto.minCost ?? 0), +(dto.maxCost ?? Number.MAX_VALUE))
-  }
-
-  @UseGuards(AccessTokenGuard)
-  @Get('/purchases/products')
-  async getCurrentUserPurchases(@Req() req: Request) {
-    return this.usersService.getCurrentUserPurchases(req.header('Authorization'))
   }
 
   @UseGuards(AccessTokenGuard)

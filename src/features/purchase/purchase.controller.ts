@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Put, Query, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { Request } from 'express';
 import { PurchaseService } from './purchase.service';
 import { AccessTokenGuard } from '../auth/guards/accessToken.guard';
@@ -10,11 +10,11 @@ export class PurchaseController {
   constructor(private readonly purchaseService: PurchaseService) {}
 
   @UsePipes(new ValidationPipe())
-  @UseGuards(AccessTokenGuard, AdminRoleGuard)
+  @UseGuards(AccessTokenGuard)
   @HttpCode(200)
-  @Post('/:id')
-  async create(@Req() req: Request, @Param('id') id: string) {
-      return this.purchaseService.create(req.header('Authorization'), id)
+  @Post()
+  async create(@Req() req: Request, @Body() body: {productIds: string[]}) {
+      return this.purchaseService.create(req.header('Authorization'), body.productIds)
   }
   
   @UseGuards(AccessTokenGuard)
@@ -23,18 +23,24 @@ export class PurchaseController {
     return this.purchaseService.getOne(id)
   }
 
-  @UseGuards(AccessTokenGuard)
+  @UseGuards(AccessTokenGuard, AdminRoleGuard)
   @Get()
-  async getMany(@Query('page') page: string = '1', @Query('limit') limit: string = '5', @Query('query') query: string = '', @Query('sort') sort: string = 'desc', @Query('status') status?: PurchaseStatus) {
+  async getMany(@Query('page') page: string = '1', @Query('limit') limit: string = '10', @Query('query') query: string = '', @Query('sort') sort: string = 'desc', @Query('status') status?: PurchaseStatus) {
     return this.purchaseService.getMany(+page, +limit, query.toUpperCase(), sort, status)
   }
   
-  @UsePipes(new ValidationPipe())
-  @UseGuards(AccessTokenGuard, AdminRoleGuard)
+  @UseGuards(AccessTokenGuard)
   @HttpCode(200)
   @Patch('/:id')
-  async patch(@Param('id') id: string, @Query('status') status: PurchaseStatus) {
-    return this.purchaseService.patch(id, status)
+  async updateStatus(@Param('id') id: string, @Query('status') status: PurchaseStatus) {
+    return this.purchaseService.updateStatus(id, status)
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @HttpCode(200)
+  @Put('/:id')
+  async update(@Param('id') id: string, @Body() body: {productIds: string[]}) {
+    return this.purchaseService.update(id, body.productIds)
   }
 
   @UseGuards(AccessTokenGuard, AdminRoleGuard)

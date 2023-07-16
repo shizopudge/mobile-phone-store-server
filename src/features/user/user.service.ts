@@ -54,17 +54,27 @@ export class UserService {
         return {info: {currentPage: page ?? 1, countOnPage: res.wishlist.length ?? 0, pageCount, itemCount: productCount ?? 0}, products: res.wishlist};
     }
 
-    async getCurrentUserPurchases(authorizationHeader: string) {
-        const id = this.getCurrentUserId(authorizationHeader);
-        return await this.prisma.user.findUnique({where: {id}, select: {purchases: {include: {product: {include: {model: {include: {products: true, manufacturer: true}}}}}}}});
-    }
-
     async getOne(id: string) {
         const user = await this.prisma.user.findUnique({where: {id}})
         if(!user) throw new NotFoundException('User not found')
         const userDto: UserDto = new UserDto(user.id, user.email, user.username, user.image, user.role, user.phone)
         return userDto
     }
+
+    async getUserPurchases(authorizationHeader: string, page: number, limit: number, query: string, sort: string, status?: PurchaseStatus) {
+        if(status) {
+            if(status !== PurchaseStatus.PENDING && status != PurchaseStatus.PAID && status != PurchaseStatus.SHIPPED && status != PurchaseStatus.DELIVERED && status != PurchaseStatus.CANCELLED) throw new BadRequestException('Incorrect status')
+        }
+        const user = await this.getUserByAuthHeader(authorizationHeader)
+        if(page === 0) page = 1
+        const skip = (page - 1) * limit
+        const purchases = await this.prisma.purchase.findMany({skip, take: limit, orderBy: {updatedAt: sort == 'desc' ? 'desc' : 'asc'}, where: {status: status, userId: user.id, id: {contains: query}}})
+        let purchasesCount = await this.prisma.purchase.count({where: {status: status, userId: user.id, id: {contains: query}}})
+        if(!purchasesCount || isNaN(purchasesCount)) purchasesCount = 0
+        const pageCount = Math.ceil(purchasesCount / limit)
+        return {info: {currentPage: page ?? 1, countOnPage: purchases.length ?? 0, pageCount, itemCount: purchasesCount ?? 0},  purchases}
+    }
+
     async update(authorizationHeader: string, dto: UpdateUserDto) {
         const user = await this.getUserByAuthHeader(authorizationHeader, {password: true,})
         if (user.email !== dto.email) {
