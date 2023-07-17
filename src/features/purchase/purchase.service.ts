@@ -2,7 +2,6 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from 'src/core/service/prisma.service';
 import { PurchaseStatus, Product } from '@prisma/client';
 import { UserService } from '../user/user.service';
-import { ICreatePayment } from '@a2seven/yoo-checkout';
 import { PurchaseReturnDto } from './dto/purchase-return.dto';
 import { uuid } from 'short-uuid';
 import { checkout } from 'src/core/utils/checkout';
@@ -11,7 +10,13 @@ import { checkout } from 'src/core/utils/checkout';
 export class PurchaseService {
     constructor(private prisma: PrismaService, private userService: UserService) {}
 
-    async create(authorizationHeader: string, productIds: string[]) {
+    async create(authorizationHeader: string, ids: string[]) {
+        let productIds : string[] = [];
+        if(productIds.length <= 1) {
+             productIds = [ids.toString()]
+        } else {
+            productIds = [...ids]
+        }
         const user = await this.userService.getUserByAuthHeader(authorizationHeader)
         const products: Product[] = await this._findProducts(productIds)
         let cost = 0;
@@ -32,12 +37,12 @@ export class PurchaseService {
             },
             confirmation: {
                 type: 'redirect',
-                return_url: 'https://www.youtube.com/'
+                return_url: 'http://localhost:50510/#/'
             },
-            description: "The order amount is displayed in rubles",
+            description: "The order amount is displayed in rubles.",
             
         }, uuid());
-        const purchase = await this.prisma.purchase.create({data: {userId: user.id, paymentId: payment.id}})
+        const purchase = await this.prisma.purchase.create({data: {id: payment.id, userId: user.id}})
         const purchaseItems = []
         products.forEach(product => purchaseItems.push({productId: product.id, purchaseId: purchase.id}))
         await this.prisma.purchaseItem.createMany({data: purchaseItems})
@@ -45,7 +50,11 @@ export class PurchaseService {
         const purchaseDto = new PurchaseReturnDto(finalPurchase.id, finalPurchase.createdAt, finalPurchase.updatedAt, finalPurchase.status, finalPurchase.userId);
         const purchasedProducts: Product[] = []
         finalPurchase.purchaseItems.forEach(purchaseItem => purchasedProducts.push(purchaseItem.product))
-        return {purchase: purchaseDto, payment, products: purchasedProducts }
+        for await (const product of purchasedProducts) {
+            await this.prisma.product.update({where: {id: product.id}, data: {inStockCount: {decrement: 1}}})
+        }
+        this._waitingForPayment(payment.id)
+        return {purchase: purchaseDto, payment: {id: payment.id, cost: payment.amount.value, currency: payment.amount.currency, description: payment.description, url: payment.confirmation.confirmation_url }, products: purchasedProducts }
     }
 
     async getOne(id: string) {
@@ -107,4 +116,31 @@ export class PurchaseService {
         }
         return products
     }
+
+    _waitingForPayment(paymentId: string) {
+        let checkCount = 0;
+        const interval = setInterval(async () => {
+             const payment = await checkout.getPayment(paymentId)
+             checkCount +=1
+             if(payment.status == 'waiting_for_capture') {
+                    await checkout.capturePayment(paymentId, payment, paymentId)
+                    console.log(`User entered data. Status: ${payment.status}, Check Count: ${checkCount}, Created at: ${payment.created_at}`)
+             } else if (payment.status == 'succeeded') {
+                clearInterval(interval)
+                await this.updateStatus(paymentId, PurchaseStatus.PAID)
+                console.log(`User paid. Status: ${payment.status}, Check Count: ${checkCount}, Created at: ${payment.created_at}`)
+             } else if (checkCount >= 50) {
+                clearInterval(interval)
+                const finalPurchase = await this.prisma.purchase.findUnique({where: {id: paymentId}, include: {purchaseItems: {include: {product: {include: {model: {include: {manufacturer: true, products: true}}}}}}}})
+                const purchasedProducts: Product[] = []
+                finalPurchase.purchaseItems.forEach(purchaseItem => purchasedProducts.push(purchaseItem.product))
+                for await (const product of purchasedProducts) {
+                    await this.prisma.product.update({where: {id: product.id}, data: {inStockCount: {increment: 1}}})
+                }
+                await this.prisma.purchase.delete({where: {id: paymentId}})
+                console.log(`Payment cancelled. Status: ${payment.status}, Check Count: ${checkCount}, Created at: ${payment.created_at}`)
+             }
+             console.log(`Payment checked ${payment.status}, Check Count: ${checkCount}, Created at: ${payment.created_at}`)
+         }, 5000)
+     }
 }
