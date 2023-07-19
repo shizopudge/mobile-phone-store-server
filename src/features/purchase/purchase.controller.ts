@@ -13,8 +13,8 @@ export class PurchaseController {
   @UseGuards(AccessTokenGuard)
   @HttpCode(200)
   @Post()
-  async create(@Req() req: Request, @Body() body: {productIds: string[]}) {
-      return this.purchaseService.create(req.header('Authorization'), body.productIds)
+  async create(@Req() req: Request, @Body() body: {productIds: string[], returnUrl: string}) {
+      return this.purchaseService.create(req.header('Authorization'), body.productIds, body.returnUrl)
   }
   
   @UseGuards(AccessTokenGuard)

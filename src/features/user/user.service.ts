@@ -3,11 +3,12 @@ import { RegistrationDto } from '../auth/dto/registration.dto';
 import { hash } from 'argon2';
 import { JwtService } from '@nestjs/jwt';
 import { UserDto } from './dto/user.dto';
-import { Prisma, PurchaseStatus } from '@prisma/client';
+import { Prisma, Product, PurchaseStatus } from '@prisma/client';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ImagesService } from 'src/core/service/image.service';
 import { PrismaService } from 'src/core/service/prisma.service';
 import { userSelectObject } from './select/user-select.object';
+import { PurchaseReturnDto } from '../purchase/dto/purchase-return.dto';
 
 @Injectable()
 export class UserService {
@@ -68,11 +69,17 @@ export class UserService {
         const user = await this.getUserByAuthHeader(authorizationHeader)
         if(page === 0) page = 1
         const skip = (page - 1) * limit
-        const purchases = await this.prisma.purchase.findMany({skip, take: limit, orderBy: {updatedAt: sort == 'desc' ? 'desc' : 'asc'}, where: {status: status, userId: user.id, id: {contains: query}}})
+        const purchases = await this.prisma.purchase.findMany({skip, take: limit, orderBy: {updatedAt: sort == 'desc' ? 'desc' : 'asc'}, where: {status: status, userId: user.id, id: {contains: query}}, include: {purchaseItems: {include: {product: {include: {model: {include: {products: true, manufacturer: true}}}}}}}})
         let purchasesCount = await this.prisma.purchase.count({where: {status: status, userId: user.id, id: {contains: query}}})
         if(!purchasesCount || isNaN(purchasesCount)) purchasesCount = 0
         const pageCount = Math.ceil(purchasesCount / limit)
-        return {info: {currentPage: page ?? 1, countOnPage: purchases.length ?? 0, pageCount, itemCount: purchasesCount ?? 0},  purchases}
+        const returnPurchases: PurchaseReturnDto[] = []
+        purchases.forEach(purchase => {
+            const products : Product[] = []
+            purchase.purchaseItems.forEach(item => products.push(item.product))
+            returnPurchases.push(new PurchaseReturnDto(purchase.id, purchase.createdAt, purchase.updatedAt, purchase.status, purchase.cost, purchase.paymentUrl, purchase.currency, purchase.userId, products, purchase.description))
+        })
+        return {info: {currentPage: page ?? 1, countOnPage: purchases.length ?? 0, pageCount, itemCount: purchasesCount ?? 0},  purchases: returnPurchases}
     }
 
     async update(authorizationHeader: string, dto: UpdateUserDto) {
