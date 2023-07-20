@@ -6,7 +6,6 @@ import { verify } from 'argon2';
 import { LoginDto } from './dto/login.dto';
 import { RegistrationDto } from './dto/registration.dto';
 import { PrismaService } from 'src/core/service/prisma.service';
-import { AuthorizedUserDto } from './dto/authorized-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +27,9 @@ export class AuthService {
         const tokens = await this.generateTokens(user.id, user.role)
         await this.userService.updateRefreshToken(user.id, tokens.refreshToken)
         const returnUser = await this.userService.getCurrentUser(`Bearer ${tokens.accessToken}`);
+        if(dto.deviceToken) {
+        await this.prisma.user.update({where: {id: user.id}, data: {deviceToken: dto.deviceToken}})
+        }
         return {user: returnUser, tokens}
     }
 
@@ -35,6 +37,7 @@ export class AuthService {
         const user = await this.userService.getUserByAuthHeader(authorizationHeader, {refreshToken: true})
         if(!user.refreshToken) throw new UnauthorizedException('Access denied')
         await this.userService.removeRefreshToken(user.id)
+        await this.prisma.user.update({where: {id: user.id}, data: {deviceToken: null}})
     }
 
     async refreshTokens(authorizationHeader: string) {

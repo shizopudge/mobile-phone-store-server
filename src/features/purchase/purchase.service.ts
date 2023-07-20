@@ -5,14 +5,13 @@ import { UserService } from '../user/user.service';
 import { PurchaseReturnDto } from './dto/purchase-return.dto';
 import { uuid } from 'short-uuid';
 import { checkout } from 'src/core/utils/checkout';
-
-
+import { getMessaging } from 'firebase-admin/messaging'
 
 @Injectable()
 export class PurchaseService {
     constructor(private prisma: PrismaService, private userService: UserService) {}
 
-    async create(authorizationHeader: string, ids: string[], returnUrl: string) {
+    async create(authorizationHeader: string, ids: string[], returnUrl: string, deviceToken?: string) {
         let productIds : string[] = [];
         if(typeof ids === 'string') {
              productIds = [ids]
@@ -20,6 +19,9 @@ export class PurchaseService {
             productIds = ids
         }
         const user = await this.userService.getUserByAuthHeader(authorizationHeader)
+        if(deviceToken) {
+            await this.prisma.user.update({where: {id: user.id}, data: {deviceToken: deviceToken}})
+        }
         const products: Product[] = await this._findProducts(productIds)
         let cost = 0;
         products.forEach(product => {
@@ -29,7 +31,6 @@ export class PurchaseService {
                 cost += product.cost
             }
         })
-        console.log(returnUrl)
         const payment = await checkout.createPayment({
             amount: {
                 value: `${cost * 90}`,
@@ -40,7 +41,7 @@ export class PurchaseService {
             },
             confirmation: {
                 type: 'redirect',
-                return_url: returnUrl.startsWith('http') ? returnUrl : `${returnUrl}:/ ` //? `https://${returnUrl}` 
+                return_url: returnUrl.startsWith('http') ? returnUrl : `${returnUrl}:/ `
             },
             description: "The order amount is displayed in rubles.",
             
@@ -90,9 +91,20 @@ export class PurchaseService {
 
     async updateStatus(id: string, status: PurchaseStatus) {
         if(status !== PurchaseStatus.PENDING && status !== PurchaseStatus.PAID && status !== PurchaseStatus.SHIPPED && status !== PurchaseStatus.DELIVERED && status != PurchaseStatus.CANCELLED) throw new BadRequestException('Incorrect status')
-        const purchase = await this.prisma.purchase.findUnique({where: {id}})
+        const purchase = await this.prisma.purchase.findUnique({where: {id}, include: {purchaseItems: {include: {product: {include: {model: {include: {manufacturer: true, products: true}}}}}}}})
+        const user = await this.prisma.user.findUnique({where: {id: purchase.userId}})
         if(!purchase) throw new NotFoundException('Purchase not found')
-        return await this.prisma.purchase.update({where: {id}, data: {status: status}})
+        if(user.deviceToken && status != 'PAID') {
+            this._sendNotification(user.deviceToken, {paymentId: purchase.id, cost: purchase.cost, currency: purchase.currency, status})
+        }
+        if(status == 'CANCELLED') {
+            const purchasedProducts: Product[] = []
+            purchase.purchaseItems.forEach(purchaseItem => purchasedProducts.push(purchaseItem.product))
+            for await (const product of purchasedProducts) {
+                await this.prisma.product.update({where: {id: product.id}, data: {inStockCount: {increment: 1}}})
+            }
+        }
+        await this.prisma.purchase.update({where: {id}, data: {status: status}})
     }
 
     async update(id: string, productIds: string[]) {
@@ -121,6 +133,7 @@ export class PurchaseService {
         for await (const productId of productIds) {
             const product = await this.prisma.product.findUnique({where: {id: productId}})
             if(!product) throw new NotFoundException('Product not found')
+            if(product.inStockCount <= 0) throw new NotFoundException(`${product.title} out of stock`)
             products.push(product)
         }
         return products
@@ -130,6 +143,7 @@ export class PurchaseService {
         let checkCount = 0;
         const interval = setInterval(async () => {
              const payment = await checkout.getPayment(paymentId)
+             const user = await this.prisma.user.findUnique({where: {id: userId}})
              checkCount +=1
              if(payment.status == 'waiting_for_capture') {
                     await checkout.capturePayment(paymentId, payment, paymentId)
@@ -138,6 +152,9 @@ export class PurchaseService {
                 clearInterval(interval)
                 await this.updateStatus(paymentId, PurchaseStatus.PAID)
                 await this.prisma.user.update({where: {id: userId}, data: {cart: {set: []}}})
+                if(user.deviceToken) {
+                    this._sendNotification(user.deviceToken, {paymentId, cost: payment.amount.value, currency: payment.amount.currency, status: PurchaseStatus.PAID})
+                }
                 console.log(`User paid. Status: ${payment.status}, Check Count: ${checkCount}, Created at: ${payment.created_at}`)
              } else if (checkCount >= 50) {
                 clearInterval(interval)
@@ -148,9 +165,27 @@ export class PurchaseService {
                     await this.prisma.product.update({where: {id: product.id}, data: {inStockCount: {increment: 1}}})
                 }
                 await this.prisma.purchase.delete({where: {id: paymentId}})
+                if(user.deviceToken) {
+                    this._sendNotification(user.deviceToken, {paymentId, cost: payment.amount.value, currency: payment.amount.currency, status: PurchaseStatus.CANCELLED})
+                }
                 console.log(`Payment cancelled. Status: ${payment.status}, Check Count: ${checkCount}, Created at: ${payment.created_at}`)
              }
              console.log(`Payment checked ${payment.status}, Check Count: ${checkCount}, Created at: ${payment.created_at}`)
          }, 5000)
      }
+
+     _sendNotification(deviceToken: string, data: {paymentId: string, cost: string, currency: string, status: PurchaseStatus}) {
+            const message = {
+                data,
+                token: deviceToken
+              };
+              console.log(message)
+              getMessaging().send(message)
+                .then((response) => {
+                  console.log('Successfully sent message:', response);
+                })
+                .catch((error) => {
+                  console.log('Error sending message:', error);
+                });
+    }
 }

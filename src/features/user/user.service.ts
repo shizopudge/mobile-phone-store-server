@@ -24,6 +24,7 @@ export class UserService {
             username: dto.username,
             phone: dto.phone,
             password: await hash(dto.password),
+            deviceToken: dto.deviceToken
         }})
       return user
     }
