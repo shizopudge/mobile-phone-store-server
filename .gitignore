@@ -5,9 +5,6 @@
 #env
 .env
 
-#firebase
-firebase-admin.json
-
 #static
 /static
 
