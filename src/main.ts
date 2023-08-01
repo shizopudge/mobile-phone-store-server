@@ -16,7 +16,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableCors({
     allowedHeaders: ['content-type'],
-    origin: 'https://84.201.179.226:5000',
+    origin: ['https://84.201.179.226:5000', 'https://84.201.179.226:5000/api'],
     credentials: true,
   });
   initializeApp({
