@@ -10,7 +10,7 @@ async function bootstrap() {
   const httpsOptions = { key: privateKey, cert: certificate };
   console.log(httpsOptions);
   const PORT = process.env.PORT || 5000;
-  const app = await NestFactory.create(AppModule, { httpsOptions });
+  const app = await NestFactory.create(AppModule, { httpsOptions, cors: true });
   const prismaService = app.get(PrismaService);
   await prismaService.enableShutdownHooks(app);
   app.setGlobalPrefix('api');
