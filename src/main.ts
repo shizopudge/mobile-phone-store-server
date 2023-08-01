@@ -10,13 +10,13 @@ async function bootstrap() {
   const httpsOptions = { key: privateKey, cert: certificate };
   console.log(httpsOptions);
   const PORT = process.env.PORT || 5000;
-  const app = await NestFactory.create(AppModule, { httpsOptions, cors: true });
+  const app = await NestFactory.create(AppModule, { httpsOptions });
   const prismaService = app.get(PrismaService);
   await prismaService.enableShutdownHooks(app);
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: 'https://84.201.179.226:8000/',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: ['content-type'],
+    origin: 'http://localhost:3000',
     credentials: true,
   });
   initializeApp({
