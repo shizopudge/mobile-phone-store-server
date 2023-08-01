@@ -4,7 +4,7 @@ import { PrismaService } from './core/service/prisma.service';
 import { initializeApp, applicationDefault} from 'firebase-admin/app';
 
 async function bootstrap() {
-  const PORT = process.env.PORT || 7000
+  const PORT = process.env.PORT || 5000
   const app = await NestFactory.create(AppModule)
   const prismaService = app.get(PrismaService)
   await prismaService.enableShutdownHooks(app)
@@ -14,6 +14,5 @@ async function bootstrap() {
     credential: applicationDefault(),
   });
   await app.listen(PORT)
-  console.log(PORT)
 }
 bootstrap();
