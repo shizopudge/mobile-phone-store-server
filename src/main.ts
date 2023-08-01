@@ -5,8 +5,8 @@ import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import * as fs from 'fs';
 
 async function bootstrap() {
-  const privateKey = fs.readFileSync('server.key', 'utf8');
-  const certificate = fs.readFileSync('server.cert', 'utf8');
+  const privateKey = fs.readFileSync('../server.key', 'utf8');
+  const certificate = fs.readFileSync('../server.cert', 'utf8');
   const httpsOptions = { key: privateKey, cert: certificate };
   console.log(httpsOptions);
   const PORT = process.env.PORT || 5000;
