@@ -15,7 +15,7 @@ export class CorsMiddleware implements NestMiddleware {
       'Access-Control-Allow-Headers',
       'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
     );
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Credentials', '1');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     console.log(res);
     next();
