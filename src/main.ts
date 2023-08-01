@@ -10,10 +10,7 @@ async function bootstrap() {
   await prismaService.enableShutdownHooks(app);
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: [
-      `https://84.201.179.226:${PORT}/`,
-      `http://84.201.179.226:${PORT}/`,
-    ],
+    origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
