@@ -11,7 +11,6 @@ import { ModelModule } from './features/model/model.module';
 import { ManufacturerModule } from './features/manufacturer/manufacturer.module';
 import { PrismaService } from './core/service/prisma.service';
 import { PurchaseModule } from './features/purchase/purchase.module';
-import { CorsMiddleware } from './core/utils/cors.middleware';
 
 @Module({
   imports: [
@@ -40,8 +39,4 @@ import { CorsMiddleware } from './core/utils/cors.middleware';
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
-export class AppModule implements NestModule {
-  public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorsMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}
