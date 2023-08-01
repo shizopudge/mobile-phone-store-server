@@ -40,8 +40,10 @@ import { CorsMiddleware } from './core/utils/cors.middleware';
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
-export class AppModule implements NestModule {
-  public configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(CorsMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}
+
+//? export class AppModule implements NestModule {
+//? public configure(consumer: MiddlewareConsumer): void {
+//?   consumer.apply(CorsMiddleware).forRoutes('*');
+//? }
+//? }
