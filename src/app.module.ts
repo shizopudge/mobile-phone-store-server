@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
@@ -11,32 +11,37 @@ import { ModelModule } from './features/model/model.module';
 import { ManufacturerModule } from './features/manufacturer/manufacturer.module';
 import { PrismaService } from './core/service/prisma.service';
 import { PurchaseModule } from './features/purchase/purchase.module';
+import { CorsMiddleware } from './core/utils/cors.middleware';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(), 
+    ConfigModule.forRoot(),
     ServeStaticModule.forRoot(
-    {
-      rootPath: join(__dirname, '..', 'static/users'),
-      renderPath: '/users'
-    },
-    {
-      rootPath: join(__dirname, '..', 'static/products'),
-      renderPath: '/products'
-    },
-    {
-      rootPath: join(__dirname, '..', 'static/manufacturers'),
-      renderPath: '/manufacturers'
-    },
-    ), 
-    AuthModule, 
+      {
+        rootPath: join(__dirname, '..', 'static/users'),
+        renderPath: '/users',
+      },
+      {
+        rootPath: join(__dirname, '..', 'static/products'),
+        renderPath: '/products',
+      },
+      {
+        rootPath: join(__dirname, '..', 'static/manufacturers'),
+        renderPath: '/manufacturers',
+      },
+    ),
+    AuthModule,
     UserModule,
     ProductModule,
     ModelModule,
     ManufacturerModule,
-    PurchaseModule
+    PurchaseModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  public configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorsMiddleware).forRoutes('*');
+  }
+}
